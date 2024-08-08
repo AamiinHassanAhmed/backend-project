@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Product" ALTER COLUMN "Author_Id" SET DEFAULT 0,
+ALTER COLUMN "Ca_Id" SET DEFAULT 0;

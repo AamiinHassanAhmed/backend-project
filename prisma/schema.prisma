@@ -1,0 +1,110 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+enum Roles {
+  super_admin
+  User
+  Admin
+}
+
+model User {
+  id                     Int        @id @default(autoincrement())
+  name                   String
+  email                  String     @unique
+  password               String
+  defaultShippingAddress Int?
+  defaultBillingAddress  Int?
+  created_at             DateTime   @default(now())
+  updated_at             DateTime   @updatedAt
+  Is_Admin               Boolean    @default(false)
+  Role                   Roles      @default(User)
+  adddresses             Address[]  // Corrected the spelling of 'addresses'
+  Cart                   Cart[]
+  category               category[]
+  Product                Product[]
+
+  @@map("users")
+}
+
+model Address {
+  id         Int      @id @default(autoincrement())
+  lineone    String
+  linetwo    String?
+  city       String
+  country    String
+  pincode    String
+  userId     Int
+  user       User     @relation(fields: [userId], references: [id])
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@map("addresses")
+}
+
+model category {
+  Ca_Id      Int       @id @default(autoincrement())
+  Ca_Name    String    @unique
+  Ca_Desc    String
+  Ca_Image   String
+  Author_Id  Int 
+  Publish    Boolean   @default(false)
+  Is_Deleted Boolean   @default(false)
+  Created_At DateTime  @default(now())
+  Updated_At DateTime  @updatedAt
+  Product    Product[]
+  User       User      @relation(fields: [Author_Id], references: [id], onDelete: Cascade)
+
+}
+
+model Product {
+  Pr_Id       Int         @id @default(autoincrement())
+  Pr_Name     String
+  Pr_Desc     String
+  Pr_Price    Float
+  Pr_Quantity Int
+  tags        String
+  Ca_Id       Int    @default(0) // Adding a default value to Cr_Id
+  Author_Id   Int    @default(0) // Adding a default value to Cr_Id
+  Published   Boolean     @default(false)
+  Is_Deleted  Boolean     @default(false)
+  Arrival     Boolean     @default(false)
+  Created_At  DateTime    @default(now())
+  Updated_At  DateTime    @updatedAt
+  category    category    @relation(fields: [Ca_Id], references: [Ca_Id], onDelete: Cascade)
+  User        User        @relation(fields: [Author_Id], references: [id], onDelete: Cascade)
+  Cart_Item   Cart_Item[]
+
+}
+
+model Cart {
+  Cr_Id      Int         @id @default(autoincrement())
+  U_Id       Int
+  User       User        @relation(fields: [U_Id], references: [id], onDelete: Cascade)
+  Created_At DateTime    @default(now())
+  Updated_At DateTime    @updatedAt
+  Is_Deleted Boolean  @default(false)
+  Cart_Item  Cart_Item[]
+}
+
+model Cart_Item {
+  Ct_Id      Int      @id @default(autoincrement())
+  Cr_Id      Int      @default(1) // Adding a default value to Cr_Id
+  Pr_Id      Int
+  IsDeleted  Boolean  @default(false)
+  Created_At DateTime @default(now())
+  Quant      Int
+  Updated_At DateTime @updatedAt
+  Cart       Cart     @relation(fields: [Cr_Id], references: [Cr_Id], onDelete: Cascade)
+  Product    Product  @relation(fields: [Pr_Id], references: [Pr_Id], onDelete: Cascade)
+}
