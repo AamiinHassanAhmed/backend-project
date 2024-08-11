@@ -20,23 +20,27 @@ enum Roles {
 
 model User {
   id                     Int        @id @default(autoincrement())
-  name                   String
+  name                   String   // 
   email                  String     @unique
   password               String
-  defaultShippingAddress Int?
-  defaultBillingAddress  Int?
+  defaultShippingAddress Int?  //removr 
+  defaultBillingAddress  Int? //removr
   created_at             DateTime   @default(now())
   updated_at             DateTime   @updatedAt
-  Is_Admin               Boolean    @default(false)
+  Is_Admin               Boolean    @default(false) // remove
   Role                   Roles      @default(User)
   adddresses             Address[]  // Corrected the spelling of 'addresses'
   Cart                   Cart[]
   category               category[]
   Product                Product[]
+  Order    Order []
+  Payment   Payment[]
+  Review Review?
 
   @@map("users")
 }
 
+//remove 
 model Address {
   id         Int      @id @default(autoincrement())
   lineone    String
@@ -56,7 +60,7 @@ model category {
   Ca_Id      Int       @id @default(autoincrement())
   Ca_Name    String    @unique
   Ca_Desc    String
-  Ca_Image   String
+  Ca_Image   String // optional
   Author_Id  Int 
   Publish    Boolean   @default(false)
   Is_Deleted Boolean   @default(false)
@@ -73,22 +77,23 @@ model Product {
   Pr_Desc     String
   Pr_Price    Float
   Pr_Quantity Int
-  tags        String
+  tags        String //remove 
   Ca_Id       Int    @default(0) // Adding a default value to Cr_Id
   Author_Id   Int    @default(0) // Adding a default value to Cr_Id
   Published   Boolean     @default(false)
   Is_Deleted  Boolean     @default(false)
-  Arrival     Boolean     @default(false)
+  Arrival     Boolean     @default(false) // waa inta soo muu qata marka la eego
   Created_At  DateTime    @default(now())
   Updated_At  DateTime    @updatedAt
   category    category    @relation(fields: [Ca_Id], references: [Ca_Id], onDelete: Cascade)
   User        User        @relation(fields: [Author_Id], references: [id], onDelete: Cascade)
   Cart_Item   Cart_Item[]
+  Review Review[]
 
 }
 
 model Cart {
-  Cr_Id      Int         @id @default(autoincrement())
+  Cr_Id      Int         @id @default(autoincrement()) // remove autoincrement
   U_Id       Int
   User       User        @relation(fields: [U_Id], references: [id], onDelete: Cascade)
   Created_At DateTime    @default(now())
@@ -97,9 +102,10 @@ model Cart {
   Cart_Item  Cart_Item[]
 }
 
+//
 model Cart_Item {
   Ct_Id      Int      @id @default(autoincrement())
-  Cr_Id      Int      @default(1) // Adding a default value to Cr_Id
+  Cr_Id      Int      @default(1) // Adding a default value to Cr_Id  // romove default value
   Pr_Id      Int
   IsDeleted  Boolean  @default(false)
   Created_At DateTime @default(now())
@@ -108,3 +114,74 @@ model Cart_Item {
   Cart       Cart     @relation(fields: [Cr_Id], references: [Cr_Id], onDelete: Cascade)
   Product    Product  @relation(fields: [Pr_Id], references: [Pr_Id], onDelete: Cascade)
 }
+
+
+
+
+enum O_Status {
+  Delivered
+  Not_Delivered
+}
+
+model Order {
+  Or_Id      Int       @id @default(autoincrement())
+  Or_Status  O_Status  @default(Not_Delivered)
+  // Items      Json[]
+  Or_Total   Float
+  isPaid      Boolean @default(false)
+  Cr_Id      Int
+  Author_Id  Int
+  Is_Deleted Boolean   @default(false)
+  Created_At DateTime  @default(now())
+  Updated_At DateTime  @updatedAt
+  User       User      @relation(fields: [Author_Id], references: [id])
+  Payment    Payment[]
+}
+
+model Payment {
+  Pa_Id      Int      @id @default(autoincrement())
+  Amount     Float
+  D_Amount   Float
+  S_Total    Float
+  Paid       Float
+  Balance    Float
+  Us_Id       Int
+  Or_Id      Int
+  IsDeleted  Boolean  @default(false)
+  Created_At DateTime @default(now())
+  Updated_At DateTime @updatedAt
+  User       User     @relation(fields: [Us_Id], references: [id], onDelete: Cascade)
+  Order      Order    @relation(fields: [Or_Id], references: [Or_Id], onDelete: Cascade)
+}
+
+
+
+
+model Review {
+  Rev_Id     Int      @id @default(autoincrement())
+  Rating     Int
+  Comment    String?
+  Author_Id  Int      @unique
+  Pr_Id      Int
+  IsDeleted  Boolean  @default(false)
+  Created_At DateTime @default(now())
+  Updated_At DateTime @updatedAt
+  User       User     @relation(fields: [Author_Id], references: [id])
+  Product    Product  @relation(fields: [Pr_Id], references: [Pr_Id])
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

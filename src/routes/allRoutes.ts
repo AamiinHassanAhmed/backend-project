@@ -6,12 +6,15 @@ import categoryRotuse from "./category";
 import categoryRoutes from "./category";
 import cartRoutes from "./cart";
 import cartItem from "./cartItem";
+import orderRoutes from "./Order";
+import reviewRoutes from "./Reviewroute";
 
 
 const rootRouter: Router=Router();
 
 // auth routes
 rootRouter.use('/auth',authRoutes)
+
 
 // cart routes
 rootRouter.use('/cart',cartRoutes)
@@ -33,7 +36,10 @@ rootRouter.use('/user',UserRoutes)
 // rootRouter.use('/ardress',)
 
 // / routes
+rootRouter.use('/order',orderRoutes)
 
+//review  routes
+rootRouter.use('/review',reviewRoutes)
 
 
 

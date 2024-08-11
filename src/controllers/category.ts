@@ -1,6 +1,6 @@
 import { Request, Response } from "express"
-import { prismaClient } from "..";
-// import { PrismaClient } from "@prisma/client";
+// import { prisma } from "..";
+// import { prisma } from "@prisma/client";
 
 import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient()
@@ -18,7 +18,7 @@ const prisma = new PrismaClient()
 //         // @ts-ignore
 //         const Author_Id = req.user.id;
 
-//         const checkCategory = await prismaClient.Category.findFirst({
+//         const checkCategory = await prisma.Category.findFirst({
 //             where: {
 //                 Ca_Name: Ca_Name,
 //             },
@@ -35,7 +35,7 @@ const prisma = new PrismaClient()
 //               message: "Validation Error.",
 //             });
 //           }
-//           const newCategory = await prismaClient.Category.create({
+//           const newCategory = await prisma.Category.create({
 //             data: {
 //               Ca_Name,
 //               Ca_Desc,
@@ -57,14 +57,22 @@ const prisma = new PrismaClient()
 //         })
 //     }
 // }
+
+
 export const CreateCategory = async (req: Request, res: Response) => {
     try {
         const { Ca_Name, Ca_Desc, Ca_Image } = req.body;
         // @ts-ignore
 
-        const Author_Id = req.user.id;
 
-        const checkCategory = await prismaClient.category.findFirst({
+
+        if (!Ca_Name || !Ca_Desc) {
+            return res.status(400).json({
+                message: "Validation Error: 'Ca_Name' and 'Ca_Desc' are required fields.",
+            });
+        }
+
+        const checkCategory = await prisma.category.findFirst({
             where: {
                 Ca_Name: Ca_Name,
             },
@@ -76,18 +84,14 @@ export const CreateCategory = async (req: Request, res: Response) => {
             });
         }
 
-        if (!Ca_Name || !Ca_Desc) {
-            return res.status(400).json({
-                message: "Validation Error: 'Ca_Name' and 'Ca_Desc' are required fields.",
-            });
-        }
 
-        const newCategory = await prismaClient.category.create({
+
+        const newCategory = await prisma.category.create({
             data: {
                 Ca_Name,
                 Ca_Desc,
                 Ca_Image,
-                User: { connect: { id: Author_Id } }, // Connect the Author by id
+                Author_Id: req.user.id!,
             },
         });
 
@@ -112,10 +116,21 @@ export const CreateCategory = async (req: Request, res: Response) => {
 
 export const GetCategories = async (req: Request, res: Response) => {
     try {
-        const category = await prismaClient.category.findMany({});
+
+        const category = await prisma.category.findMany({
+            include: {
+                Product: true,
+            },
+        });
+        if (!category) return res.status(401).json({
+            message: "No category found",
+            isSuccess: false,
+        })
+
         res.status(200).json({
             message: "Success",
             result: category,
+
         })
 
     } catch (error) {
@@ -131,9 +146,11 @@ export const GetCategories = async (req: Request, res: Response) => {
 export const UpdateCategory = async (req: Request, res: Response) => {
     try {
         // Assuming categoryId is the ID of the category to update
+        const { Ca_Id } = req.params
         const { Ca_Name, Ca_Desc } = req.body; // Assuming the request body contains the updated name and description
-        const checkcategory = await prismaClient.category.findFirst({
-            where: { Ca_Id: +req.params.id, Is_Deleted: false }
+        const checkcategory = await prisma.category.findFirst({
+            where: { Ca_Id: +Ca_Id, Is_Deleted: false }
+
         });
 
         if (!checkcategory) {
@@ -144,13 +161,12 @@ export const UpdateCategory = async (req: Request, res: Response) => {
         // Update the category in the database
         const updatedCategory = await prisma.category.update({
             where: {
-                Ca_Id: +req.params.id // Assuming 'id' is the primary key field for categories and parsing categoryId to an integer
+                Ca_Id: +Ca_Id// Assuming 'id' is the primary key field for categories and parsing categoryId to an integer
             },
             data: {
                 Ca_Name,
                 Ca_Desc,
-                Publish: true,
-                Is_Deleted: false,
+                Author_Id: req.user.id!
             }
         });
 
@@ -175,9 +191,10 @@ export const DeleteCategory = async (req: Request, res: Response) => {
 
         const { id } = req.params;
 
-        const checkCategory = await prismaClient.category.findFirst({
+        const checkCategory = await prisma.category.findFirst({
             where: {
                 Ca_Id: +id,
+                Is_Deleted: true
             },
         });
 
@@ -187,7 +204,7 @@ export const DeleteCategory = async (req: Request, res: Response) => {
             });
         }
 
-        const deletedcategory = await prismaClient.category.delete({
+        const deletedcategory = await prisma.category.delete({
             where: {
                 Ca_Id: +id,
             },
@@ -205,60 +222,19 @@ export const DeleteCategory = async (req: Request, res: Response) => {
         })
     }
 }
-
-// get fuction category 
-
-
-
-
-export const GetProductsByCategory = async (req: Request, res: Response) => {
-    try {
-
-
-        const ckeckCategory = await prisma.category.findFirst({
-            where: { Ca_Id: +req.params.id },
-            include: {
-                Product: true,
-            },
-            //  rejectOnNotFound: true,
-        });
-
-        if (!ckeckCategory) {
-            return res.status(404).json({
-                message: "Category not found",
-            });
-        }
-        const products = await prisma.category.findMany({
-            where: {
-                Ca_Id: +req.params.id // Assuming 'categoryId' is the field linking products to categories and parsing categoryId to an integer
-            }
-        });
-
-        return res.status(200).json({
-            message: "Products retrieved successfully",
-            isSuccess: true,
-            products: products
-        });
-    } catch (error) {
-        console.error(error);
-        return res.status(500).json({
-            message: "Error retrieving products by category",
-            isSuccess: false
-        });
-    }
-};
-
-
-
 // get all  by category br id
 
 export const GetCategoryById = async (req: Request, res: Response) => {
     try {
 
-
+        const { Ca_Id } = req.params
         const ckeckCategory = await prisma.category.findFirst({
-            where: { Ca_Id: +req.params.id },
-            //  rejectOnNotFound: true,
+            where: {
+                Ca_Id: +Ca_Id
+            },
+            include: {
+                Product: true,
+            },
         });
 
         if (!ckeckCategory) {
@@ -266,15 +242,11 @@ export const GetCategoryById = async (req: Request, res: Response) => {
                 message: "Category not found",
             });
         }
-        const category = await prisma.category.findFirst({
-            where: {
-                Ca_Id: +req.params.id // Assuming 'categoryId' is the field linking products to categories and parsing categoryId to an integer
-            }
-        });
+
         return res.status(200).json({
             message: "Category retrieved successfully",
             isSuccess: true,
-            category: category
+            category: ckeckCategory
         });
     } catch (error) {
         console.error(error);
